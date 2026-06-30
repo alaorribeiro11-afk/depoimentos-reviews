@@ -37,8 +37,9 @@
   function removeDefaultNoReviews(){
     document.querySelectorAll('*').forEach(function(el){
       if(el.id==='sr-mini'||el.closest('#sr-mini'))return;
-      var t=el.textContent.trim().toLowerCase();
-      if(t==='sem avaliações'||t.indexOf('sem avaliações')>-1){
+      var tag=el.tagName;
+      if(tag==='SCRIPT'||tag==='STYLE'||tag==='BODY'||tag==='HTML')return;
+      if(el.textContent.trim().toLowerCase()==='sem avaliações'){
         el.style.display='none';
         var nx=el.nextElementSibling;
         if(nx&&(nx.tagName==='HR'||nx.tagName==='BR'))nx.style.display='none';
@@ -48,9 +49,11 @@
 
   function watchNoReviews(){
     var ob=new MutationObserver(function(ms){
-      var r=0;
-      ms.forEach(function(m){m.addedNodes.forEach(function(n){if(n.nodeType===1&&n.textContent.trim().toLowerCase().indexOf('sem avaliações')>-1)r=1;});});
-      if(r)removeDefaultNoReviews();
+      ms.forEach(function(m){
+        m.addedNodes.forEach(function(n){
+          if(n.nodeType===1&&n.id!=='sr-mini'&&n.textContent.trim().toLowerCase()==='sem avaliações')removeDefaultNoReviews();
+        });
+      });
     });
     ob.observe(document.body,{childList:true,subtree:true});
   }
