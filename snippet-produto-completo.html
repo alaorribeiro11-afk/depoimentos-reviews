@@ -20,9 +20,9 @@
 
   function renderSummary(stats){var avg=stats.average||0,total=stats.total||0,bd=stats.breakdown||{},bars='';for(var i=5;i>=1;i--){var c=bd[i]||0,pct=total>0?Math.round(c/total*100):0;bars+='<div class="sr-bar-row"><span class="sr-bar-label">'+i+'</span><span class="sr-star filled" style="font-size:13px">★</span><div class="sr-bar-track"><div class="sr-bar-fill" style="width:'+pct+'%"></div></div><span class="sr-bar-count">'+c+'</span></div>';}return'<div class="sr-summary"><div style="text-align:center"><div class="sr-score-big">'+(avg>0?avg.toFixed(1):'—')+'</div><div class="sr-stars-display">'+starsHTML(Math.round(avg))+'</div><div class="sr-total-label">'+total+' avaliações</div></div><div class="sr-breakdown">'+bars+'</div></div>';}
 
-  function renderReviews(reviews){if(!reviews.length)return'<div class="sr-empty">Nenhuma ainda.</div>';return reviews.map(function(r){var initial=r.author_name.trim()[0].toUpperCase();var pA=r.photos||[];var photosHtml=pA.length?'<div class="sr-review-photos">'+pA.map(function(u){return'<img class="sr-review-photo" src="'+u+'" onclick="window.__srLB(\''+u+'\')" alt=""/>';}).join('')+'</div>':'';return'<div class="sr-review-card"><div class="sr-review-header"><div class="sr-avatar">'+initial+'</div><div class="sr-review-meta"><div class="sr-review-author">'+escapeHTML(r.author_name)+'</div></div><div class="sr-review-stars">'+starsHTML(r.rating)+'</div></div><div class="sr-review-text">'+escapeHTML(r.comment)+'</div>'+photosHtml+'</div>';}).join('');}
+  function renderReviews(reviews){if(!reviews.length)return'<div class="sr-empty">Nenhuma.</div>';return reviews.map(function(r){var initial=r.author_name.trim()[0].toUpperCase();var pA=r.photos||[];var photosHtml=pA.length?'<div class="sr-review-photos">'+pA.map(function(u){return'<img class="sr-review-photo" src="'+u+'" onclick="window.__srLB(\''+u+'\')" alt=""/>';}).join('')+'</div>':'';return'<div class="sr-review-card"><div class="sr-review-header"><div class="sr-avatar">'+initial+'</div><div class="sr-review-meta"><div class="sr-review-author">'+escapeHTML(r.author_name)+'</div></div><div class="sr-review-stars">'+starsHTML(r.rating)+'</div></div><div class="sr-review-text">'+escapeHTML(r.comment)+'</div>'+photosHtml+'</div>';}).join('');}
 
-  function renderPagination(page,total){var tp=Math.ceil(total/LIMIT);if(tp<=1)return'';var h='<div class="sr-pagination">';if(page>1)h+='<button class="sr-page-btn" onclick="window.__srPage('+(page-1)+')">← Anterior</button>';for(var i=Math.max(1,page-2);i<=Math.min(tp,page+2);i++)h+='<button class="sr-page-btn'+(i===page?' active':'')+'" onclick="window.__srPage('+i+')">'+i+'</button>';if(page<tp)h+='<button class="sr-page-btn" onclick="window.__srPage('+(page+1)+')">Próxima →</button>';return h+'</div>';}
+  function renderPagination(page,total){var tp=Math.ceil(total/LIMIT);if(tp<=1)return'';var h='<div class="sr-pagination">';if(page>1)h+='<button class="sr-page-btn" onclick="window.__srPage('+(page-1)+')">Anterior</button>';for(var i=Math.max(1,page-2);i<=Math.min(tp,page+2);i++)h+='<button class="sr-page-btn'+(i===page?' active':'')+'" onclick="window.__srPage('+i+')">'+i+'</button>';if(page<tp)h+='<button class="sr-page-btn" onclick="window.__srPage('+(page+1)+')">Próxima</button>';return h+'</div>';}
 
   function showMsg(text,type){var el=document.getElementById('sr-form-msg');if(!el)return;el.textContent=text;el.className='sr-msg '+type;el.style.display='block';if(type==='success')setTimeout(function(){el.style.display='none';},6000);}
 
@@ -70,19 +70,19 @@
     var photoInput=document.getElementById('sr-photo');
     var photoGrid=document.getElementById('sr-photo-grid');
     var photoName=document.getElementById('sr-photo-name');
-    photoInput.addEventListener('change',function(){var files=Array.from(this.files);photoGrid.innerHTML='';if(!files.length){photoName.textContent='Adicionar fotos';return;}photoName.textContent=files.length+' foto(s)';files.forEach(function(f){var fr=new FileReader();fr.onload=function(e){var i=document.createElement('img');i.src=e.target.result;i.className='sr-photo-thumb';photoGrid.appendChild(i);};fr.readAsDataURL(f);});});
+    photoInput.addEventListener('change',function(){var files=Array.from(this.files);photoGrid.innerHTML='';if(!files.length){photoName.textContent='Foto';return;}photoName.textContent=files.length+' foto';files.forEach(function(f){var fr=new FileReader();fr.onload=function(e){var i=document.createElement('img');i.src=e.target.result;i.className='sr-photo-thumb';photoGrid.appendChild(i);};fr.readAsDataURL(f);});});
     document.getElementById('sr-submit-btn').addEventListener('click',function(){
       var author=document.getElementById('sr-author').value.trim();
       var comment=document.getElementById('sr-comment').value.trim();
       var photos=Array.from(document.getElementById('sr-photo').files);
-      if(!author)return showMsg('Informe seu nome.','error');
-      if(!sel)return showMsg('Selecione uma nota.','error');
+      if(!author)return showMsg('Informe nome.','error');
+      if(!sel)return showMsg('Selecione nota.','error');
       if(comment.length<10)return showMsg('Muito curto.','error');
       var btn=document.getElementById('sr-submit-btn');
       btn.disabled=true;btn.textContent='Enviando...';
       function mkFd(){var fd=new FormData();fd.append('product_id',PRODUCT_ID);fd.append('author_name',author);fd.append('rating',sel);fd.append('comment',comment);if(photos.length>0)fd.append('photo',photos[0]);return fd;}
-      function done(){btn.disabled=false;btn.textContent='Enviar Avaliação';}
-      function go(n){fetch(API_BASE+'/api/reviews',{method:'POST',body:mkFd()}).then(function(r){return r.json().then(function(d){return{s:r.status,d:d};});}).then(function(x){if(x.s===429){showMsg('Limite de envios.','error');done();return;}if(x.d.success){showMsg(x.d.message,'success');document.getElementById('sr-author').value='';document.getElementById('sr-comment').value='';document.getElementById('sr-photo').value='';photoGrid.innerHTML='';photoName.textContent='Adicionar fotos';sel=0;stars.forEach(function(s){s.classList.remove('active');});done();}else{showMsg(x.d.error||'Erro.','error');done();}}).catch(function(){if(n<3){btn.textContent='...';setTimeout(function(){go(n+1);},8000);}else{showMsg('Erro conexão','error');done();}});}
+      function done(){btn.disabled=false;btn.textContent='Enviar';}
+      function go(n){fetch(API_BASE+'/api/reviews',{method:'POST',body:mkFd()}).then(function(r){return r.json().then(function(d){return{s:r.status,d:d};});}).then(function(x){if(x.s===429){showMsg('Limite.','error');done();return;}if(x.d.success){showMsg('Parabéns! Você ganhou um cupom de desconto para utilizar em sua próxima compra. Use o código: PRESENTE','success');document.getElementById('sr-author').value='';document.getElementById('sr-comment').value='';document.getElementById('sr-photo').value='';photoGrid.innerHTML='';photoName.textContent='Foto';sel=0;stars.forEach(function(s){s.classList.remove('active');});done();}else{showMsg(x.d.error||'Erro.','error');done();}}).catch(function(){if(n<3){btn.textContent='...';setTimeout(function(){go(n+1);},8000);}else{showMsg('Erro.','error');done();}});}
       go(1);
     });
   }
@@ -92,18 +92,18 @@
     var container=document.getElementById(CONTAINER_ID);
     if(!container)return;
     container.innerHTML=
-      '<h2 class="sr-section-title">Avaliações dos Clientes</h2>'+
+      '<h2 class="sr-section-title">Avaliações</h2>'+
       '<div id="sr-summary-container"></div>'+
       '<h3 class="sr-section-title" style="font-size:17px;margin-top:0">Avaliações</h3>'+
       '<div id="sr-list"><div class="sr-empty">Carregando...</div></div>'+
       '<div class="sr-form-card">'+
-        '<div class="sr-form-title">Deixe sua avaliação</div>'+
+        '<div class="sr-form-title">Deixe avaliação</div>'+
         '<div class="sr-msg" id="sr-form-msg"></div>'+
-        '<div class="sr-field"><label class="sr-label">Seu nome *</label><input class="sr-input" id="sr-author" type="text" maxlength="80"/></div>'+
+        '<div class="sr-field"><label class="sr-label">Nome *</label><input class="sr-input" id="sr-author" type="text" maxlength="80"/></div>'+
         '<div class="sr-field"><label class="sr-label">Nota *</label><div class="sr-stars-input" id="sr-star-input"><span class="sr-star-input" data-v="1">★</span><span class="sr-star-input" data-v="2">★</span><span class="sr-star-input" data-v="3">★</span><span class="sr-star-input" data-v="4">★</span><span class="sr-star-input" data-v="5">★</span></div></div>'+
-        '<div class="sr-field"><label class="sr-label">Depoimento *</label><textarea class="sr-textarea" id="sr-comment" maxlength="1000"></textarea></div>'+
-        '<div class="sr-field"><label class="sr-label">Foto (opcional)</label><label class="sr-photo-label" for="sr-photo"><span id="sr-photo-name">Adicionar fotos</span></label><input type="file" id="sr-photo" accept="image/*" style="display:none"/><div id="sr-photo-grid" class="sr-photo-grid"></div></div>'+
-        '<button class="sr-submit-btn" id="sr-submit-btn">Enviar Avaliação</button>'+
+        '<div class="sr-field"><label class="sr-label">Depoimento</label><textarea class="sr-textarea" id="sr-comment" maxlength="1000"></textarea></div>'+
+        '<div class="sr-field"><label class="sr-label">Foto</label><label class="sr-photo-label" for="sr-photo"><span id="sr-photo-name">Foto</span></label><input type="file" id="sr-photo" accept="image/*" style="display:none"/><div id="sr-photo-grid" class="sr-photo-grid"></div></div>'+
+        '<button class="sr-submit-btn" id="sr-submit-btn">Enviar</button>'+
       '</div>'+
       '<div id="sr-lightbox" class="sr-lightbox"><span class="sr-lightbox-close" onclick="document.getElementById(\'sr-lightbox\').classList.remove(\'open\')">X</span><img src="" alt=""/></div>';
     bindForm();loadPage(1);removeDefaultNoReviews();watchNoReviews();
